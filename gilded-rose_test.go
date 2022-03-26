@@ -5,20 +5,28 @@ import (
 	"testing"
 )
 
-func TestLowerSellInDate(t *testing.T) {
+func TestUpdateQuality(t *testing.T) {
 	tests := []struct {
 		name string
 		item *Item
 		want *Item
 	}{
 		// TODO: Add test cases.
-		{"happy path", &Item{"bar", 10, 6}, &Item{"bar", 9, 5}},
-		{"happy path with 0 quality", &Item{"foo", 0, 0}, &Item{"foo", -1, 0}},
+		{"system lowers both values", &Item{"bar", 10, 6}, &Item{"bar", 9, 5}},
+		{"when sell in date below 0, quality degrades by 2", &Item{"foo", 0, 10}, &Item{"foo", -1, 8}},
+		{"quality can't be below 0", &Item{"foo", 0, 0}, &Item{"foo", -1, 0}},
+		{"Aged Brie increases quality by 2", &Item{"Aged Brie", 0, 9}, &Item{"Aged Brie", -1, 11}},
+		{"quality of an item is never more than 50", &Item{"Aged Brie", 0, 50}, &Item{"Aged Brie", -1, 50}},
+		{"'Sulfuras' never has to be sold or decreases in Quality", &Item{"Sulfuras, Hand of Ragnaros", 0, 45}, &Item{"Sulfuras, Hand of Ragnaros", 0, 45}},
+		{"'Backstage passes' quality increases by 2 when there are 10 days or less", &Item{"Backstage passes to a TAFKAL80ETC concert", 10, 5}, &Item{"Backstage passes to a TAFKAL80ETC concert", 9, 7}},
+		{"'Backstage passes' quality increases by by 3 when there are 5 days or less", &Item{"Backstage passes to a TAFKAL80ETC concert", 5, 6}, &Item{"Backstage passes to a TAFKAL80ETC concert", 4, 9}},
+		{"'Backstage passes' quality drops to 0 after the concert", &Item{"Backstage passes to a TAFKAL80ETC concert", 0, 15}, &Item{"Backstage passes to a TAFKAL80ETC concert", -1, 0}},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			if reflect.DeepEqual(*tt.item, *tt.want) {
-				t.Errorf("Got -> %v\n Want -> %v", *tt.item, tt.want)
+			UpdateQuality([]*Item{tt.item})
+			if !reflect.DeepEqual(tt.item, tt.want) {
+				t.Errorf("Want -> %v\nGot -> %v", *tt.want, *tt.item)
 			}
 		})
 	}
